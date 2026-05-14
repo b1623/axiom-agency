@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERA — Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@200;300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#010105;
+  --ink2:#0c0c18;
+  --gold:#c9a84c;
+  --gold2:#f0d080;
+  --gold3:#e8b84b;
+  --rose:#c4816a;
+  --mint:#4ecdc4;
+  --parchment:#f5f0e8;
+  --warm:#d4c5a9;
+  --muted:#6b6272;
+  --border:rgba(201,168,76,0.12);
+  --border2:rgba(245,240,232,0.06);
+  --ff-serif:'Playfair Display',serif;
+  --ff-sans:'Outfit',sans-serif;
+  --ff-mono:'IBM Plex Mono',monospace;
+  --ease-expo:cubic-bezier(0.16,1,0.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--parchment);font-family:var(--ff-sans);font-weight:300;overflow-x:hidden;cursor:none}
+
+/* ── CURSOR ── */
+#c-dot{position:fixed;top:0;left:0;width:6px;height:6px;background:var(--gold2);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);will-change:transform}
+#c-ring{position:fixed;top:0;left:0;width:32px;height:32px;border:1px solid rgba(201,168,76,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);will-change:transform;transition:width .3s var(--ease-expo),height .3s var(--ease-expo),opacity .3s}
+#c-trail{position:fixed;top:0;left:0;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.06),transparent 70%);pointer-events:none;z-index:9996;transform:translate(-50%,-50%);will-change:transform}
+body.hovering #c-ring{width:52px;height:52px;border-color:var(--gold)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px}
+
+/* ── GRAIN OVERLAY ── */
+#grain{position:fixed;inset:0;z-index:9995;pointer-events:none;opacity:.55;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)' opacity='0.08'/%3E%3C/svg%3E")}
+
+/* ── AURORA BG ── */
+#aurora{position:fixed;inset:0;z-index:0;overflow:hidden}
+.aurora-layer{position:absolute;border-radius:50%;filter:blur(100px);mix-blend-mode:screen;animation:drift linear infinite}
+.al1{width:900px;height:700px;background:radial-gradient(ellipse,rgba(100,60,180,0.18),transparent 70%);top:-200px;right:-200px;animation-duration:25s}
+.al2{width:700px;height:500px;background:radial-gradient(ellipse,rgba(180,120,40,0.12),transparent 70%);bottom:-100px;left:-100px;animation-duration:30s;animation-delay:-10s}
+.al3{width:500px;height:400px;background:radial-gradient(ellipse,rgba(78,205,196,0.08),transparent 70%);top:40%;left:30%;animation-duration:20s;animation-delay:-5s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.05)}66%{transform:translate(-40px,60px) scale(0.95)}}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:24px 7vw;display:flex;align-items:center;justify-content:space-between}
+.nav-veil{position:absolute;inset:0;background:rgba(1,1,5,0.6);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border2)}
+.nav-logo{position:relative;z-index:1;display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:28px;height:28px;border:1.5px solid var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-size:14px;font-style:italic;color:var(--gold)}
+.logo-name{font-family:var(--ff-sans);font-size:15px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--parchment)}
+.nav-center{position:relative;z-index:1;display:flex;align-items:center;gap:36px}
+.nav-center a{font-size:13px;font-weight:300;color:var(--muted);text-decoration:none;letter-spacing:.05em;transition:color .2s}
+.nav-center a:hover{color:var(--parchment)}
+.nav-right{position:relative;z-index:1;display:flex;align-items:center;gap:12px}
+.btn-ghost{font-size:13px;font-weight:400;color:var(--warm);background:none;border:none;cursor:none;letter-spacing:.05em;transition:color .2s}
+.btn-ghost:hover{color:var(--gold2)}
+.btn-gold{font-size:13px;font-weight:500;color:var(--ink);background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;cursor:none;padding:10px 22px;border-radius:6px;letter-spacing:.06em;transition:all .25s;position:relative;overflow:hidden}
+.btn-gold::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);opacity:0;transition:opacity .2s}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(201,168,76,0.35)}
+.btn-gold:hover::after{opacity:1}
+
+/* ── HERO ── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;padding:120px 7vw 80px;z-index:1;overflow:hidden}
+.hero-rule{position:absolute;top:0;left:7vw;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--border),transparent);pointer-events:none}
+.hero-rule2{position:absolute;top:0;right:7vw;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--border),transparent);pointer-events:none}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;width:100%}
+.hero-left{}
+.hero-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:36px;opacity:0;transform:translateY(20px)}
+.eye-line{width:40px;height:1px;background:var(--gold)}
+.eye-text{font-family:var(--ff-mono);font-size:11px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase}
+.hero-title{font-family:var(--ff-serif);font-size:clamp(52px,6.5vw,88px);font-weight:700;line-height:1.05;letter-spacing:-.01em;margin-bottom:32px}
+.hero-title .line{overflow:hidden;display:block}
+.hero-title .word{display:inline-block;transform:translateY(110%)}
+.hero-title em{font-style:italic;color:var(--gold2)}
+.hero-title .stroke{-webkit-text-stroke:1px var(--parchment);color:transparent}
+.hero-body{font-size:16px;font-weight:300;color:var(--warm);line-height:1.8;max-width:420px;margin-bottom:48px;opacity:0}
+.hero-actions{display:flex;align-items:center;gap:20px;opacity:0}
+.btn-primary-hero{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--ink);background:linear-gradient(135deg,var(--gold2),var(--gold3));padding:16px 32px;border-radius:8px;text-decoration:none;letter-spacing:.04em;transition:all .3s;position:relative;overflow:hidden}
+.btn-primary-hero::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);transition:left .4s}
+.btn-primary-hero:hover::before{left:100%}
+.btn-primary-hero:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(201,168,76,0.4)}
+.btn-secondary-hero{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:400;color:var(--warm);letter-spacing:.04em;text-decoration:none;transition:color .2s}
+.btn-secondary-hero:hover{color:var(--gold2)}
+.btn-secondary-hero span{font-size:18px}
+.hero-metrics{display:flex;gap:36px;margin-top:60px;padding-top:40px;border-top:1px solid var(--border2);opacity:0}
+.metric{}
+.metric-val{font-family:var(--ff-serif);font-size:36px;font-weight:700;color:var(--parchment);line-height:1}
+.metric-val sup{font-size:18px;color:var(--gold)}
+.metric-label{font-size:12px;font-weight:400;color:var(--muted);margin-top:4px;letter-spacing:.05em}
+.hero-right{position:relative;opacity:0;transform:translateX(40px)}
+.card-3d{position:relative;transform-style:preserve-3d;transition:transform .6s var(--ease-expo)}
+.main-card{background:linear-gradient(160deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));border:1px solid var(--border);border-radius:20px;overflow:hidden;backdrop-filter:blur(20px);box-shadow:0 40px 100px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08)}
+.card-header{padding:20px 24px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px}
+.card-dot{width:8px;height:8px;border-radius:50%}
+.cd-gold{background:var(--gold)}
+.cd-rose{background:var(--rose)}
+.cd-mint{background:var(--mint)}
+.card-title-bar{margin-left:auto;font-family:var(--ff-mono);font-size:11px;color:var(--muted);letter-spacing:.1em}
+.card-body{padding:24px}
+.ai-line{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+.ai-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.av-gold{background:linear-gradient(135deg,var(--gold),var(--rose));color:var(--ink);font-weight:600}
+.av-user{background:rgba(255,255,255,0.08);border:1px solid var(--border)}
+.ai-bubble{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:0 12px 12px 12px;padding:12px 16px;font-size:13px;font-weight:300;line-height:1.6;color:var(--warm);max-width:280px}
+.user-bubble{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:12px 0 12px 12px;padding:12px 16px;font-size:13px;font-weight:300;line-height:1.6;color:var(--parchment);max-width:260px}
+.ai-line.right{flex-direction:row-reverse}
+.ai-line.right .ai-bubble{border-radius:12px 0 12px 12px}
+.typing{display:flex;gap:4px;padding:14px 16px;align-items:center}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.card-footer{padding:16px 24px;border-top:1px solid var(--border2);display:flex;gap:8px}
+.cf-tag{font-family:var(--ff-mono);font-size:10px;color:var(--gold);background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:4px;padding:4px 10px;letter-spacing:.1em}
+.float-badge{position:absolute;bottom:-20px;right:-20px;background:linear-gradient(135deg,rgba(12,12,24,0.95),rgba(20,20,36,0.9));border:1px solid var(--border);border-radius:14px;padding:14px 18px;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.fb-num{font-family:var(--ff-serif);font-size:28px;font-weight:700;color:var(--gold2);line-height:1}
+.fb-label{font-family:var(--ff-mono);font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.1em;text-transform:uppercase}
+.float-badge2{position:absolute;top:-16px;left:-16px;background:linear-gradient(135deg,rgba(12,12,24,0.95),rgba(20,20,36,0.9));border:1px solid rgba(78,205,196,0.2);border-radius:10px;padding:10px 14px;backdrop-filter:blur(20px)}
+.fb2-text{font-size:12px;color:var(--mint);display:flex;align-items:center;gap:6px}
+
+/* ── MARQUEE ── */
+.marquee-wrap{position:relative;z-index:1;padding:24px 0;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);overflow:hidden;background:rgba(255,255,255,0.015)}
+.marquee-track{display:flex;white-space:nowrap;animation:scroll 22s linear infinite}
+.marquee-item{display:inline-flex;align-items:center;gap:28px;padding:0 28px;font-family:var(--ff-mono);font-size:12px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.marquee-item .gem{color:var(--gold);font-size:8px}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── FEATURES ── */
+#features{position:relative;z-index:1;padding:120px 7vw}
+.feat-header{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:end;margin-bottom:80px}
+.feat-label{font-family:var(--ff-mono);font-size:11px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.feat-label::before{content:'';width:24px;height:1px;background:var(--gold)}
+.feat-h{font-family:var(--ff-serif);font-size:clamp(40px,4.5vw,62px);font-weight:700;line-height:1.05;letter-spacing:-.01em}
+.feat-h em{font-style:italic;color:var(--gold2)}
+.feat-p{font-size:15px;font-weight:300;color:var(--warm);line-height:1.8;max-width:380px;align-self:end}
+.feat-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:14px}
+.fb{background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border2);border-radius:18px;padding:36px;position:relative;overflow:hidden;transition:border-color .4s,transform .3s var(--ease-expo)}
+.fb:hover{border-color:rgba(201,168,76,0.2);transform:translateY(-3px)}
+.fb::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(201,168,76,0.04),transparent 60%);pointer-events:none;opacity:0;transition:opacity .4s}
+.fb:hover::after{opacity:1}
+.fb1{grid-column:span 5;grid-row:span 2}
+.fb2{grid-column:span 7}
+.fb3{grid-column:span 4}
+.fb4{grid-column:span 3}
+.fb5{grid-column:span 5}
+.fb6{grid-column:span 7}
+.fb-icon{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:28px}
+.fb-name{font-family:var(--ff-serif);font-size:22px;font-weight:700;margin-bottom:12px;line-height:1.1}
+.fb-desc{font-size:14px;font-weight:300;color:var(--warm);line-height:1.75}
+.fb-tag{margin-top:24px;display:inline-flex;align-items:center;gap:6px;font-family:var(--ff-mono);font-size:10px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase}
+.fb-tag::after{content:'→'}
+/* Large card extras */
+.fb-visual{margin-top:28px;background:rgba(0,0,0,0.3);border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+.mini-chart{display:flex;align-items:flex-end;gap:5px;padding:16px;height:80px}
+.mc-bar{border-radius:3px 3px 0 0;flex:1}
+.mc1{background:linear-gradient(to top,var(--gold),rgba(201,168,76,0.3));height:50%}
+.mc2{background:linear-gradient(to top,var(--gold),rgba(201,168,76,0.3));height:75%}
+.mc3{background:linear-gradient(to top,var(--gold),rgba(201,168,76,0.3));height:55%}
+.mc4{background:linear-gradient(to top,var(--gold2),rgba(240,208,128,0.4));height:90%}
+.mc5{background:linear-gradient(to top,var(--mint),rgba(78,205,196,0.4));height:100%}
+.mc6{background:linear-gradient(to top,var(--mint),rgba(78,205,196,0.4));height:80%}
+.mc7{background:linear-gradient(to top,var(--mint),rgba(78,205,196,0.4));height:95%}
+
+/* ── SOCIAL PROOF ── */
+#proof{position:relative;z-index:1;padding:100px 7vw;background:rgba(255,255,255,0.012);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)}
+.proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:60px}
+.proof-card{background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border2);border-radius:16px;padding:32px;transition:border-color .3s,transform .3s}
+.proof-card:hover{border-color:rgba(201,168,76,0.15);transform:translateY(-2px)}
+.proof-stars{color:var(--gold2);font-size:13px;letter-spacing:2px;margin-bottom:20px}
+.proof-text{font-family:var(--ff-serif);font-size:17px;font-style:italic;line-height:1.7;color:var(--parchment);margin-bottom:24px}
+.proof-author{display:flex;align-items:center;gap:12px}
+.proof-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--ink)}
+.pa1{background:linear-gradient(135deg,var(--gold),var(--rose))}
+.pa2{background:linear-gradient(135deg,var(--mint),#3b82f6)}
+.pa3{background:linear-gradient(135deg,var(--rose),#8b5cf6)}
+.proof-name{font-size:14px;font-weight:500;color:var(--parchment)}
+.proof-role{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── PRICING ── */
+#pricing{position:relative;z-index:1;padding:120px 7vw}
+.pricing-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:64px}
+.pc{background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border2);border-radius:20px;padding:40px;position:relative;overflow:hidden;transition:transform .3s var(--ease-expo)}
+.pc:hover{transform:translateY(-4px)}
+.pc.hot{border-color:rgba(201,168,76,0.3);background:linear-gradient(160deg,rgba(201,168,76,0.07),rgba(201,168,76,0.02))}
+.pc.hot::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.hot-chip{position:absolute;top:20px;right:20px;font-family:var(--ff-mono);font-size:9px;color:var(--ink);background:var(--gold);padding:4px 10px;border-radius:100px;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.pc-tier{font-family:var(--ff-mono);font-size:11px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:20px}
+.pc-price{font-family:var(--ff-serif);font-size:58px;font-weight:700;line-height:1;color:var(--parchment);margin-bottom:6px}
+.pc-price sup{font-size:24px;vertical-align:super;font-weight:400}
+.pc-price.custom{font-size:38px;padding-top:10px}
+.pc-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.pc-divider{height:1px;background:var(--border2);margin-bottom:28px}
+.pc-item{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:300;color:var(--warm);margin-bottom:12px;line-height:1.4}
+.pc-item::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.btn-pc{display:block;text-align:center;padding:14px;border-radius:10px;font-size:13px;font-weight:500;cursor:none;text-decoration:none;letter-spacing:.05em;margin-top:28px;transition:all .25s}
+.btn-pc-border{color:var(--parchment);border:1px solid var(--border);background:transparent}
+.btn-pc-border:hover{border-color:var(--gold);color:var(--gold)}
+.btn-pc-fill{color:var(--ink);background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;font-weight:600}
+.btn-pc-fill:hover{box-shadow:0 10px 36px rgba(201,168,76,0.4);transform:translateY(-1px)}
+
+/* ── CTA FINAL ── */
+#final-cta{position:relative;z-index:1;padding:120px 7vw;text-align:center;overflow:hidden}
+.cta-orb{position:absolute;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.07),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.08)}}
+.cta-inner{position:relative;z-index:1}
+.cta-kicker{font-family:var(--ff-mono);font-size:11px;color:var(--gold);letter-spacing:.25em;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:12px}
+.cta-kicker::before,.cta-kicker::after{content:'';width:32px;height:1px;background:var(--gold)}
+.cta-title{font-family:var(--ff-serif);font-size:clamp(48px,7vw,96px);font-weight:700;line-height:1;letter-spacing:-.02em;margin-bottom:24px}
+.cta-title em{font-style:italic;color:var(--gold2)}
+.cta-sub{font-size:17px;font-weight:300;color:var(--warm);margin-bottom:52px;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.7}
+.email-row{display:flex;gap:10px;max-width:460px;margin:0 auto}
+.e-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-size:14px;font-family:var(--ff-sans);color:var(--parchment);outline:none;transition:border-color .2s}
+.e-input::placeholder{color:var(--muted)}
+.e-input:focus{border-color:rgba(201,168,76,0.4)}
+.btn-cta-hero{font-size:14px;font-weight:500;color:var(--ink);background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;padding:16px 28px;border-radius:10px;cursor:none;white-space:nowrap;transition:all .25s;letter-spacing:.04em}
+.btn-cta-hero:hover{box-shadow:0 12px 40px rgba(201,168,76,0.4);transform:translateY(-1px)}
+.cta-note{font-family:var(--ff-mono);font-size:11px;color:var(--muted);margin-top:16px;letter-spacing:.08em}
+
+/* ── FOOTER ── */
+footer{position:relative;z-index:1;padding:60px 7vw 36px;border-top:1px solid var(--border2)}
+.ft-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+.ft-logo{display:flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:14px}
+.ft-tagline{font-size:13px;font-weight:300;color:var(--muted);line-height:1.7;max-width:220px}
+.ft-col-head{font-family:var(--ff-mono);font-size:10px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px}
+.ft-links{display:flex;flex-direction:column;gap:10px}
+.ft-links a{font-size:13px;font-weight:300;color:var(--warm);text-decoration:none;transition:color .2s;letter-spacing:.02em}
+.ft-links a:hover{color:var(--gold2)}
+.ft-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:28px;border-top:1px solid var(--border2)}
+.ft-copy{font-family:var(--ff-mono);font-size:11px;color:var(--muted);letter-spacing:.08em}
+.ft-socials{display:flex;gap:8px}
+.soc{width:30px;height:30px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;transition:all .2s;cursor:none}
+.soc:hover{background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.3)}
+
+/* ── REVEAL ── */
+.r{opacity:0;transform:translateY(36px)}
+.r-left{opacity:0;transform:translateX(-36px)}
+.r-right{opacity:0;transform:translateX(36px)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .feat-bento{grid-template-columns:repeat(6,1fr)}
+  .fb1,.fb2,.fb3,.fb4,.fb5,.fb6{grid-column:span 6;grid-row:auto}
+  .ft-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:860px){
+  .nav-center{display:none}
+  .hero-grid{grid-template-columns:1fr}
+  .hero-right{display:none}
+  .feat-header{grid-template-columns:1fr}
+  .proof-grid{grid-template-columns:1fr}
+  .pricing-cards{grid-template-columns:1fr}
+  .ft-grid{grid-template-columns:1fr 1fr}
+  .email-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="c-dot"></div>
+<div id="c-ring"></div>
+<div id="c-trail"></div>
+<div id="grain"></div>
+
+<div id="aurora">
+  <div class="aurora-layer al1"></div>
+  <div class="aurora-layer al2"></div>
+  <div class="aurora-layer al3"></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-veil"></div>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">V</div>
+    <span class="logo-name">Vera</span>
+  </a>
+  <div class="nav-center">
+    <a href="#features">Platform</a>
+    <a href="#proof">Customers</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#">Docs</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-gold">Request access</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-rule"></div>
+  <div class="hero-rule2"></div>
+  <div class="hero-grid">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <div class="eye-line"></div>
+        <span class="eye-text">Intelligence Platform — 2025</span>
+      </div>
+      <h1 class="hero-title">
+        <span class="line"><span class="word">The <em>thinking</em></span></span>
+        <span class="line"><span class="word">layer for</span></span>
+        <span class="line"><span class="word stroke">your</span> <span class="word">business.</span></span>
+      </h1>
+      <p class="hero-body">
+        Vera orchestrates your data, automates complex decisions, and
+        surfaces intelligence at the exact moment your team needs it.
+        No engineering overhead. No compromises.
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary-hero">Start building free <span>↗</span></a>
+        <a href="#" class="btn-secondary-hero"><span>▶</span> See it in action</a>
+      </div>
+      <div class="hero-metrics">
+        <div class="metric">
+          <div class="metric-val" data-target="99.9">0<sup>%</sup></div>
+          <div class="metric-label">Uptime SLA</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" data-target="840">0<sup>ms</sup></div>
+          <div class="metric-label">Avg. response</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" data-target="18000">0<sup>+</sup></div>
+          <div class="metric-label">Teams onboarded</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="card-3d" id="card3d">
+        <div class="float-badge2">
+          <div class="fb2-text">
+            <span style="width:6px;height:6px;background:var(--mint);border-radius:50%;display:inline-block;animation:pulse 2s infinite"></span>
+            Processing live data
+          </div>
+        </div>
+        <div class="main-card">
+          <div class="card-header">
+            <div class="card-dot cd-gold"></div>
+            <div class="card-dot cd-rose"></div>
+            <div class="card-dot cd-mint"></div>
+            <div class="card-title-bar">vera · intelligence</div>
+          </div>
+          <div class="card-body">
+            <div class="ai-line">
+              <div class="ai-avatar av-user">👤</div>
+              <div class="user-bubble">Summarize Q3 performance and flag any anomalies in customer churn.</div>
+            </div>
+            <div class="ai-line">
+              <div class="ai-avatar av-gold">V</div>
+              <div class="ai-bubble">Q3 revenue grew 24% YoY. I detected a 3.2% churn spike in the SMB segment — traced to 2 pricing changes on Aug 14. Recommend reviewing the $99 tier.</div>
+            </div>
+            <div class="ai-line">
+              <div class="ai-avatar av-user">👤</div>
+              <div class="user-bubble">Show me the affected cohort and draft a retention email.</div>
+            </div>
+            <div class="ai-line">
+              <div class="ai-avatar av-gold">V</div>
+              <div class="typing">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="cf-tag">ANALYSIS</div>
+            <div class="cf-tag">RETENTION</div>
+            <div class="cf-tag">LIVE</div>
+          </div>
+        </div>
+        <div class="float-badge">
+          <div class="fb-num" id="cnt">0</div>
+          <div class="fb-label">Insights today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Data Intelligence <span class="gem">◆</span></span>
+    <span class="marquee-item">Workflow Automation <span class="gem">◆</span></span>
+    <span class="marquee-item">Predictive Analytics <span class="gem">◆</span></span>
+    <span class="marquee-item">AI Orchestration <span class="gem">◆</span></span>
+    <span class="marquee-item">Real-time Insights <span class="gem">◆</span></span>
+    <span class="marquee-item">Enterprise Security <span class="gem">◆</span></span>
+    <span class="marquee-item">Data Intelligence <span class="gem">◆</span></span>
+    <span class="marquee-item">Workflow Automation <span class="gem">◆</span></span>
+    <span class="marquee-item">Predictive Analytics <span class="gem">◆</span></span>
+    <span class="marquee-item">AI Orchestration <span class="gem">◆</span></span>
+    <span class="marquee-item">Real-time Insights <span class="gem">◆</span></span>
+    <span class="marquee-item">Enterprise Security <span class="gem">◆</span></span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="feat-header">
+    <div>
+      <div class="feat-label r">The Platform</div>
+      <h2 class="feat-h r">Built for the <br><em>way you think.</em></h2>
+    </div>
+    <p class="feat-p r">Vera combines your data sources, reasoning engines, and workflow automation into a single coherent intelligence layer.</p>
+  </div>
+  <div class="feat-bento">
+    <div class="fb fb1 r">
+      <div class="fb-icon">🧠</div>
+      <div class="fb-name">Contextual Reasoning</div>
+      <p class="fb-desc">Vera understands the nuance behind your questions. It pulls relevant data from across all your connected sources and reasons through it like a senior analyst would.</p>
+      <div class="fb-tag">Explore reasoning</div>
+      <div class="fb-visual">
+        <div class="mini-chart">
+          <div class="mc-bar mc1"></div>
+          <div class="mc-bar mc2"></div>
+          <div class="mc-bar mc3"></div>
+          <div class="mc-bar mc4"></div>
+          <div class="mc-bar mc5"></div>
+          <div class="mc-bar mc6"></div>
+          <div class="mc-bar mc7"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fb fb2 r">
+      <div class="fb-icon">⚡</div>
+      <div class="fb-name">Instant Automations</div>
+      <p class="fb-desc">Describe what you want to automate in plain language. Vera builds the workflow, tests it, and deploys it — typically in under 90 seconds.</p>
+      <div class="fb-tag">See automations</div>
+    </div>
+    <div class="fb fb3 r">
+      <div class="fb-icon">🔗</div>
+      <div class="fb-name">600+ Connectors</div>
+      <p class="fb-desc">Every tool your team already uses, fully connected out of the box.</p>
+    </div>
+    <div class="fb fb4 r">
+      <div class="fb-icon">🛡️</div>
+      <div class="fb-name">SOC2 Certified</div>
+      <p class="fb-desc">Enterprise-grade security built in from day one. Your data never trains our models.</p>
+    </div>
+    <div class="fb fb5 r">
+      <div class="fb-icon">📊</div>
+      <div class="fb-name">Live Dashboards</div>
+      <p class="fb-desc">Every insight Vera generates is tracked, auditable, and surfaced in real-time dashboards your whole org can use.</p>
+      <div class="fb-tag">View analytics</div>
+    </div>
+    <div class="fb fb6 r">
+      <div class="fb-icon">🌐</div>
+      <div class="fb-name">Multi-model Architecture</div>
+      <p class="fb-desc">Vera routes each task to the best-fit model — whether that's speed, reasoning depth, or cost efficiency. You always get optimal results without managing model complexity yourself.</p>
+      <div class="fb-tag">Learn more</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section id="proof">
+  <div class="feat-label r" style="justify-content:center">What teams say</div>
+  <h2 class="feat-h r" style="text-align:center">Loved by the teams <br><em>that ship fastest.</em></h2>
+  <div class="proof-grid">
+    <div class="proof-card r">
+      <div class="proof-stars">★★★★★</div>
+      <p class="proof-text">"Vera replaced an entire analytics team workflow. What took three days now takes eight minutes."</p>
+      <div class="proof-author">
+        <div class="proof-av pa1">S</div>
+        <div>
+          <div class="proof-name">Sarah Chen</div>
+          <div class="proof-role">Head of Growth, Lattice</div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-card r">
+      <div class="proof-stars">★★★★★</div>
+      <p class="proof-text">"The contextual reasoning is unlike anything we've seen. It actually understands our business — not just the data."</p>
+      <div class="proof-author">
+        <div class="proof-av pa2">M</div>
+        <div>
+          <div class="proof-name">Marcus Webb</div>
+          <div class="proof-role">CTO, Clearbit</div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-card r">
+      <div class="proof-stars">★★★★★</div>
+      <p class="proof-text">"We went from 45 manual reporting hours per week to zero. Our team now focuses on decisions, not data wrangling."</p>
+      <div class="proof-author">
+        <div class="proof-av pa3">A</div>
+        <div>
+          <div class="proof-name">Anya Patel</div>
+          <div class="proof-role">VP Operations, Linear</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="feat-label r">Investment</div>
+  <h2 class="feat-h r">Transparent pricing. <br><em>No surprises.</em></h2>
+  <div class="pricing-cards">
+    <div class="pc r">
+      <div class="pc-tier">Explorer</div>
+      <div class="pc-price"><sup>$</sup>0</div>
+      <div class="pc-sub">Free · No credit card required</div>
+      <div class="pc-divider"></div>
+      <div class="pc-item">5 connected data sources</div>
+      <div class="pc-item">500 AI queries / month</div>
+      <div class="pc-item">Basic automations</div>
+      <div class="pc-item">Community support</div>
+      <a href="#" class="btn-pc btn-pc-border">Start free today</a>
+    </div>
+    <div class="pc hot r">
+      <div class="hot-chip">Popular</div>
+      <div class="pc-tier">Growth</div>
+      <div class="pc-price"><sup>$</sup>49</div>
+      <div class="pc-sub">per seat / month, billed annually</div>
+      <div class="pc-divider"></div>
+      <div class="pc-item">Unlimited data sources</div>
+      <div class="pc-item">Unlimited AI queries</div>
+      <div class="pc-item">Advanced automations</div>
+      <div class="pc-item">Priority support (4hr SLA)</div>
+      <div class="pc-item">Custom dashboards</div>
+      <div class="pc-item">Audit logs & SSO</div>
+      <a href="#" class="btn-pc btn-pc-fill">Start 14-day trial →</a>
+    </div>
+    <div class="pc r">
+      <div class="pc-tier">Enterprise</div>
+      <div class="pc-price custom">Custom</div>
+      <div class="pc-sub">Tailored to your scale</div>
+      <div class="pc-divider"></div>
+      <div class="pc-item">Dedicated infrastructure</div>
+      <div class="pc-item">Custom model fine-tuning</div>
+      <div class="pc-item">SLA up to 99.99%</div>
+      <div class="pc-item">Dedicated success team</div>
+      <div class="pc-item">On-premise deployment option</div>
+      <a href="#" class="btn-pc btn-pc-border">Talk to our team</a>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="final-cta">
+  <div class="cta-orb"></div>
+  <div class="cta-inner">
+    <div class="cta-kicker r">Begin your journey</div>
+    <h2 class="cta-title r">Intelligence is<br>now <em>effortless.</em></h2>
+    <p class="cta-sub r">Join 18,000+ teams that chose Vera to think faster, decide better, and move further.</p>
+    <div class="email-row r">
+      <input type="email" class="e-input" placeholder="your@company.com">
+      <button class="btn-cta-hero">Get early access →</button>
+    </div>
+    <div class="cta-note r">No credit card · Free forever plan · Setup in 4 minutes</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-grid">
+    <div>
+      <a href="#" class="ft-logo">
+        <div class="logo-mark">V</div>
+        <span class="logo-name">Vera</span>
+      </a>
+      <p class="ft-tagline">The intelligence layer that makes every team think faster.</p>
+    </div>
+    <div>
+      <div class="ft-col-head">Platform</div>
+      <div class="ft-links">
+        <a href="#">Features</a>
+        <a href="#">Integrations</a>
+        <a href="#">Pricing</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+    <div>
+      <div class="ft-col-head">Company</div>
+      <div class="ft-links">
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+      </div>
+    </div>
+    <div>
+      <div class="ft-col-head">Legal</div>
+      <div class="ft-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">DPA</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+  <div class="ft-bottom">
+    <div class="ft-copy">© 2025 Vera Technologies Inc.</div>
+    <div class="ft-socials">
+      <a class="soc" href="#">𝕏</a>
+      <a class="soc" href="#">in</a>
+      <a class="soc" href="#">gh</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ── CURSOR ── */
+const dot=document.getElementById('c-dot'),ring=document.getElementById('c-ring'),trail=document.getElementById('c-trail');
+let mx=0,my=0,rx=0,ry=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+(function tick(){
+  dot.style.left=mx+'px';dot.style.top=my+'px';
+  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  tx+=(mx-tx)*.06;ty+=(my-ty)*.06;
+  trail.style.left=tx+'px';trail.style.top=ty+'px';
+  requestAnimationFrame(tick);
+})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+/* ── HERO TITLE ── */
+gsap.to('.hero-title .word',{y:0,duration:1.2,ease:'power4.out',stagger:.1,delay:.2});
+gsap.to('.hero-eyebrow',{opacity:1,y:0,duration:.8,delay:.1,ease:'power3.out'});
+gsap.to('.hero-body',{opacity:1,y:0,duration:.8,delay:.7,ease:'power3.out'});
+gsap.to('.hero-actions',{opacity:1,y:0,duration:.8,delay:.9,ease:'power3.out'});
+gsap.to('.hero-metrics',{opacity:1,y:0,duration:.8,delay:1.1,ease:'power3.out'});
+gsap.to('.hero-right',{opacity:1,x:0,duration:1.2,delay:.8,ease:'power4.out'});
+gsap.from('nav',{y:-40,opacity:0,duration:.9,delay:.1,ease:'power3.out'});
+
+/* ── COUNTER ── */
+function counter(el,target,suffix,dec=0){
+  gsap.to({v:0},{v:target,duration:2.5,ease:'power2.out',delay:1.4,
+    onUpdate:function(){
+      const v=this.targets()[0].v;
+      el.innerHTML=(dec?v.toFixed(dec):Math.floor(v))+`<sup>${suffix}</sup>`;
+    }
+  });
+}
+document.querySelectorAll('.metric-val').forEach(el=>{
+  const t=parseFloat(el.dataset.target);
+  const s=el.querySelector('sup').textContent;
+  const dec=t%1!==0?1:0;
+  counter(el,t,s,dec);
+});
+gsap.to({v:0},{v:2847,duration:3,ease:'power2.out',delay:1.6,
+  onUpdate:function(){document.getElementById('cnt').textContent=Math.floor(this.targets()[0].v).toLocaleString()}
+});
+
+/* ── CARD 3D TILT ── */
+const card=document.getElementById('card3d');
+document.addEventListener('mousemove',e=>{
+  const r=card.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const dx=(e.clientX-cx)/r.width,dy=(e.clientY-cy)/r.height;
+  gsap.to(card,{rotateY:dx*10,rotateX:-dy*8,duration:1.2,ease:'power2.out',transformPerspective:800});
+});
+
+/* ── SCROLL REVEALS ── */
+gsap.utils.toArray('.r').forEach((el,i)=>{
+  gsap.fromTo(el,{opacity:0,y:36},{
+    opacity:1,y:0,duration:.9,ease:'power3.out',
+    scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'},
+    delay:(i%4)*.07
+  });
+});
+gsap.utils.toArray('.r-left').forEach(el=>{
+  gsap.fromTo(el,{opacity:0,x:-36},{opacity:1,x:0,duration:.9,ease:'power3.out',
+    scrollTrigger:{trigger:el,start:'top 88%'}});
+});
+gsap.utils.toArray('.r-right').forEach(el=>{
+  gsap.fromTo(el,{opacity:0,x:36},{opacity:1,x:0,duration:.9,ease:'power3.out',
+    scrollTrigger:{trigger:el,start:'top 88%'}});
+});
+
+/* ── AURORA MOUSE PARALLAX ── */
+document.addEventListener('mousemove',e=>{
+  const px=(e.clientX/window.innerWidth-.5)*24;
+  const py=(e.clientY/window.innerHeight-.5)*24;
+  gsap.to('.al1',{x:px*.7,y:py*.7,duration:3,ease:'power2.out'});
+  gsap.to('.al2',{x:-px*.5,y:-py*.5,duration:3,ease:'power2.out'});
+  gsap.to('.al3',{x:px*.3,y:py*.3,duration:3,ease:'power2.out'});
+});
+
+/* ── TEXT SCRAMBLE on hero badge ── */
+const eye=document.querySelector('.eye-text');
+const original=eye.textContent;
+const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+let frame=0;
+function scramble(){
+  eye.textContent=original.split('').map((c,i)=>{
+    if(i<frame) return original[i];
+    if(c===' ') return ' ';
+    return chars[Math.floor(Math.random()*chars.length)];
+  }).join('');
+  if(frame<original.length){frame+=2;requestAnimationFrame(scramble)}
+  else{eye.textContent=original}
+}
+setTimeout(scramble,600);
+</script>
+</body>
+</html>
